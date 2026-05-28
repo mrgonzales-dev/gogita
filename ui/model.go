@@ -3,20 +3,31 @@ package ui
 import (
 	"fmt"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"gogita/ui/keys"
 	"gogita/ui/styles"
+
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Model struct {
-	width  int
-	height int
-	count  int
+	width     int
+	height    int
+	count     int
+	textInput textinput.Model
+}
+
+func NewModel() Model {
+	ti := textinput.New()
+	ti.Focus()
+	return Model{
+		textInput: ti,
+	}
 }
 
 func (m Model) Init() tea.Cmd {
-	return nil
+	return textinput.Blink
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -30,6 +41,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case keys.IsIncrement(msg):
 			m.count++
+		default:
+			var cmd tea.Cmd
+			m.textInput, cmd = m.textInput.Update(msg)
+			return m, cmd
 		}
 	}
 	return m, nil
@@ -43,6 +58,8 @@ func (m Model) View() string {
 		header,
 		"",
 		button,
+		"",
+		styles.TextInput.Render(m.textInput.View()),
 	)
 
 	return lipgloss.Place(

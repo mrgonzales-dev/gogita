@@ -9,4 +9,9 @@ var (
 		Padding(0, 4).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(lipgloss.Color("#888"))
+
+	TextInput = lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color("#888")).
+			Padding(0, 2)
 )
