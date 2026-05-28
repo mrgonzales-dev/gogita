@@ -1,18 +1,35 @@
 package ui
 
 import (
+	"fmt"
 	"gogita/ui/keys"
 	"gogita/ui/styles"
+	"os/exec"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
+type branchMsg string
+type errMsg string
+
+func getBranchName() tea.Cmd {
+	return func() tea.Msg {
+		out, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
+		if err != nil {
+			return errMsg(fmt.Sprintf("Error getting branch name: %s", err))
+		}
+		return branchMsg(strings.TrimSpace(string(out)))
+	}
+}
+
 type Model struct {
-	width     int
-	height    int
-	textInput textinput.Model
+	width      int
+	height     int
+	branchName string
+	textInput  textinput.Model
 }
 
 func NewModel() Model {
@@ -24,7 +41,7 @@ func NewModel() Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return textinput.Blink
+	return tea.Batch(getBranchName(), textinput.Blink)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -32,6 +49,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+	case branchMsg:
+		m.branchName = string(msg)
+	case errMsg:
+		m.branchName = fmt.Sprintf("Error: %s", string(msg))
 	case tea.KeyMsg:
 		switch {
 		case keys.IsQuit(msg):
@@ -46,7 +67,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	header := styles.Button.Render("GOGITA")
+	header := styles.Button.Render(m.branchName)
 
 	content := lipgloss.JoinVertical(lipgloss.Center,
 		header,
