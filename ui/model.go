@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"fmt"
-
 	"gogita/ui/keys"
 	"gogita/ui/styles"
 
@@ -14,7 +12,6 @@ import (
 type Model struct {
 	width     int
 	height    int
-	count     int
 	textInput textinput.Model
 }
 
@@ -39,8 +36,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case keys.IsQuit(msg):
 			return m, tea.Quit
-		case keys.IsIncrement(msg):
-			m.count++
 		default:
 			var cmd tea.Cmd
 			m.textInput, cmd = m.textInput.Update(msg)
@@ -51,13 +46,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	button := styles.Button.Render("Click Up")
-	header := fmt.Sprintf("Hello World!  Count: %d", m.count)
+	header := styles.Button.Render("GOGITA")
 
 	content := lipgloss.JoinVertical(lipgloss.Center,
 		header,
-		"",
-		button,
 		"",
 		styles.TextInput.Render(m.textInput.View()),
 	)
