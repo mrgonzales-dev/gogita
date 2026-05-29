@@ -2,19 +2,28 @@ package ui
 
 import (
 	"fmt"
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"gogita/ui/keys"
 	"gogita/ui/styles"
 	"os/exec"
 	"strings"
-
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"time"
 )
 
 type branchMsg string
 type errMsg string
 type commitMsg []string
+type tickMsg time.Time
+
+func fetchNewCommits() tea.Cmd {
+
+	return tea.Tick(30*time.Second, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
+
+}
 
 func getRecentCommits() tea.Cmd {
 	return func() tea.Msg {
