@@ -5,8 +5,8 @@ import "github.com/charmbracelet/lipgloss"
 var (
 	SidePanel = lipgloss.NewStyle().
 			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("#1a1a4e")).
-			Background(lipgloss.Color("#1a1a4e"))
+			BorderForeground(lipgloss.Color("#000")).
+			Background(lipgloss.Color("#000"))
 
 	Button = lipgloss.NewStyle().
 		Padding(0, 4).
@@ -17,5 +17,7 @@ var (
 			BorderStyle(lipgloss.NormalBorder())
 
 	MainPanel = lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder())
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color("#000")).
+			Background(lipgloss.Color("#000"))
 )
