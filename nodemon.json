@@ -1,0 +1,8 @@
+{
+  "watch": ["."],
+  "ext": "go",
+  "exec": "go run .",
+  "signal": "SIGTERM",
+  "delay": "500",
+  "stdin": false
+}

@@ -3,15 +3,19 @@ package styles
 import "github.com/charmbracelet/lipgloss"
 
 var (
+	SidePanel = lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color("#1a1a4e")).
+			Background(lipgloss.Color("#1a1a4e"))
+
 	Button = lipgloss.NewStyle().
-		Background(lipgloss.Color("#555")).
-		Foreground(lipgloss.Color("#FFF")).
 		Padding(0, 4).
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("#888"))
+		BorderStyle(lipgloss.NormalBorder())
 
 	TextInput = lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("#888")).
-			Padding(0, 2)
+			Padding(0, 2).
+			BorderStyle(lipgloss.NormalBorder())
+
+	MainPanel = lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder())
 )

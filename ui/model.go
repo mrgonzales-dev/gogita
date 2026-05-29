@@ -67,17 +67,34 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	header := styles.Button.Render(m.branchName)
 
-	content := lipgloss.JoinVertical(lipgloss.Center,
-		header,
-		"",
+	mainWidth := m.width * 3 / 4
+	sideWidth := m.width / 4
+
+	mainContent := lipgloss.JoinVertical(
+		lipgloss.Center,
+		styles.Button.Render(m.branchName),
 		styles.TextInput.Render(m.textInput.View()),
 	)
 
-	return lipgloss.Place(
-		m.width, m.height,
-		lipgloss.Center, lipgloss.Center,
-		content,
+	mainPane := styles.MainPanel.Width(mainWidth).Height(m.height).Render(
+		lipgloss.Place(
+			mainWidth,
+			m.height,
+			lipgloss.Center,
+			lipgloss.Center,
+			mainContent,
+		),
+	)
+
+	sidePane := styles.SidePanel.
+		Width(sideWidth - 2).
+		Height(m.height).
+		Render("")
+
+	return lipgloss.JoinHorizontal(
+		lipgloss.Center,
+		sidePane,
+		mainPane,
 	)
 }
