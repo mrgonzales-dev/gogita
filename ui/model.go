@@ -14,6 +14,17 @@ import (
 
 type branchMsg string
 type errMsg string
+type commitMsg []string
+
+func getRecentCommits() tea.Cmd {
+	return func() tea.Msg {
+		out, err := exec.Command("git", "log", "--oneline", "-15").Output()
+		if err != nil {
+			return errMsg(fmt.Sprintf("Error getting recent commits: %s", err))
+		}
+		return commitMsg(strings.Split(string(out), "\n"))
+	}
+}
 
 func getBranchName() tea.Cmd {
 	return func() tea.Msg {
@@ -29,6 +40,7 @@ type Model struct {
 	width      int
 	height     int
 	branchName string
+	commits    []string
 	textInput  textinput.Model
 }
 
@@ -41,7 +53,7 @@ func NewModel() Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(getBranchName(), textinput.Blink)
+	return tea.Batch(getBranchName(), getRecentCommits(), textinput.Blink)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -53,6 +65,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.branchName = string(msg)
 	case errMsg:
 		m.branchName = fmt.Sprintf("Error: %s", string(msg))
+	case commitMsg:
+		m.commits = []string(msg)
 	case tea.KeyMsg:
 		switch {
 		case keys.IsQuit(msg):
@@ -87,10 +101,20 @@ func (m Model) View() string {
 		),
 	)
 
+	innerWidth := sideWidth - 2
+	var commitLines []string
+	for i, commit := range m.commits {
+		if i%2 == 0 {
+			commitLines = append(commitLines, styles.CommitEven.Width(innerWidth).Render(commit))
+		} else {
+			commitLines = append(commitLines, styles.CommitOdd.Width(innerWidth).Render(commit))
+		}
+	}
+
 	sidePane := styles.SidePanel.
 		Width(sideWidth - 2).
 		Height(m.height).
-		Render("")
+		Render(strings.Join(commitLines, "\n"))
 
 	return lipgloss.JoinHorizontal(
 		lipgloss.Center,

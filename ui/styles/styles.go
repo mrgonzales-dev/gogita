@@ -8,6 +8,9 @@ var (
 			BorderForeground(lipgloss.Color("#000")).
 			Background(lipgloss.Color("#000"))
 
+	CommitEven = lipgloss.NewStyle().Background(lipgloss.Color("#111111"))
+	CommitOdd  = lipgloss.NewStyle().Background(lipgloss.Color("#1e1e1e"))
+
 	Button = lipgloss.NewStyle().
 		Padding(0, 4).
 		BorderStyle(lipgloss.NormalBorder())
