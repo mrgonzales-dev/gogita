@@ -3,20 +3,13 @@ package styles
 import "github.com/charmbracelet/lipgloss"
 
 var (
-	SidePanel = lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("#000")).
-			Background(lipgloss.Color("#000"))
-
-	CommitEven = lipgloss.NewStyle().Background(lipgloss.Color("#111111"))
-	CommitOdd  = lipgloss.NewStyle().Background(lipgloss.Color("#1e1e1e"))
-
-	Button = lipgloss.NewStyle().
-		Padding(0, 4).
-		BorderStyle(lipgloss.NormalBorder())
+	CommitEven    = lipgloss.NewStyle().Background(lipgloss.Color("#111111"))
+	CommitOdd     = lipgloss.NewStyle().Background(lipgloss.Color("#1e1e1e"))
+	CommitCurrent = lipgloss.NewStyle().Background(lipgloss.Color("#4a148c"))
 
 	MainPanel = lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("#000")).
-			Background(lipgloss.Color("#000"))
+			Background(lipgloss.Color("#000")).
+			PaddingTop(1).
+			PaddingLeft(2).
+			PaddingRight(2)
 )
