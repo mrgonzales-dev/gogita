@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"gogita/ui/keys"
@@ -13,17 +12,10 @@ import (
 )
 
 type branchMsg string
+type branchesMsg []string
 type errMsg string
 type commitMsg []string
 type tickMsg time.Time
-
-func fetchNewCommits() tea.Cmd {
-
-	return tea.Tick(30*time.Second, func(t time.Time) tea.Msg {
-		return tickMsg(t)
-	})
-
-}
 
 func getRecentCommits() tea.Cmd {
 	return func() tea.Msg {
@@ -45,24 +37,33 @@ func getBranchName() tea.Cmd {
 	}
 }
 
-type Model struct {
-	width      int
-	height     int
-	branchName string
-	commits    []string
-	textInput  textinput.Model
-}
-
-func NewModel() Model {
-	ti := textinput.New()
-	ti.Focus()
-	return Model{
-		textInput: ti,
+func fetchAllBranches() tea.Cmd {
+	return func() tea.Msg {
+		out, err := exec.Command("git", "branch").Output()
+		if err != nil {
+			return errMsg(fmt.Sprintf("Error getting branch name: %s", err))
+		}
+		return branchesMsg(strings.Split(string(out), "\n"))
 	}
 }
 
+type Model struct {
+	width       int
+	height      int
+	branchName  string
+	commits     []string
+	allBranches []string
+}
+
+func NewModel() Model {
+	return Model{}
+}
+
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(getBranchName(), getRecentCommits(), textinput.Blink)
+	return tea.Batch(
+		getBranchName(),
+		getRecentCommits(),
+		fetchAllBranches())
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -72,6 +73,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 	case branchMsg:
 		m.branchName = string(msg)
+	case branchesMsg:
+		m.allBranches = []string(msg)
 	case errMsg:
 		m.branchName = fmt.Sprintf("Error: %s", string(msg))
 	case commitMsg:
@@ -82,11 +85,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		default:
 			var cmd tea.Cmd
-			m.textInput, cmd = m.textInput.Update(msg)
 			return m, cmd
 		}
 	}
 	return m, nil
+}
+
+func renderCommits(m Model, innerWidth int) []string {
+	var commitLines []string
+	for i, commit := range m.commits {
+		if i%2 == 0 {
+			commitLines = append(commitLines, styles.CommitEven.Width(innerWidth).Render(commit))
+		} else {
+			commitLines = append(commitLines, styles.CommitOdd.Width(innerWidth).Render(commit))
+		}
+	}
+	return commitLines
 }
 
 func (m Model) View() string {
@@ -94,12 +108,19 @@ func (m Model) View() string {
 	mainWidth := m.width * 3 / 4
 	sideWidth := m.width / 4
 
+	//render the branches
+	var branches []string
+	for _, branch := range m.allBranches {
+		branches = append(branches, styles.Button.Render(branch))
+	}
+
 	mainContent := lipgloss.JoinVertical(
 		lipgloss.Center,
 		styles.Button.Render(m.branchName),
-		styles.TextInput.Render(m.textInput.View()),
+		styles.Button.Render(branches...),
 	)
 
+	// MAIN PANE holds the branch name
 	mainPane := styles.MainPanel.Width(mainWidth).Height(m.height).Render(
 		lipgloss.Place(
 			mainWidth,
@@ -111,15 +132,11 @@ func (m Model) View() string {
 	)
 
 	innerWidth := sideWidth - 2
-	var commitLines []string
-	for i, commit := range m.commits {
-		if i%2 == 0 {
-			commitLines = append(commitLines, styles.CommitEven.Width(innerWidth).Render(commit))
-		} else {
-			commitLines = append(commitLines, styles.CommitOdd.Width(innerWidth).Render(commit))
-		}
-	}
 
+	//fetch the commits
+	var commitLines = renderCommits(m, innerWidth)
+
+	// Side Pane, holds the commits
 	sidePane := styles.SidePanel.
 		Width(sideWidth - 2).
 		Height(m.height).
