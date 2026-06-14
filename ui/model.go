@@ -43,7 +43,7 @@ func fetchAllBranches() tea.Cmd {
 		if err != nil {
 			return errMsg(fmt.Sprintf("Error getting branch name: %s", err))
 		}
-		return branchesMsg(strings.Split(string(out), "\n"))
+		return branchesMsg(strings.Split(strings.TrimSuffix(string(out), "\n"), "\n")) //removes the trailing
 	}
 }
 
@@ -110,14 +110,23 @@ func (m Model) View() string {
 
 	//render the branches
 	var branches []string
+	maxLen := 0
 	for _, branch := range m.allBranches {
-		branches = append(branches, styles.Button.Render(branch))
+		if len(branch) > maxLen {
+			maxLen = len(branch)
+		}
+	}
+	for _, branch := range m.allBranches {
+		branches = append(branches, styles.Button.Width(maxLen+8).Render(branch))
 	}
 
 	mainContent := lipgloss.JoinVertical(
 		lipgloss.Center,
-		styles.Button.Render(m.branchName),
-		styles.Button.Render(branches...),
+		//render the branches no empty
+		lipgloss.JoinVertical(
+			lipgloss.Center,
+			branches...,
+		),
 	)
 
 	// MAIN PANE holds the branch name
