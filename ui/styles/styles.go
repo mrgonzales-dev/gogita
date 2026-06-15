@@ -3,9 +3,10 @@ package styles
 import "github.com/charmbracelet/lipgloss"
 
 var (
-	CommitEven    = lipgloss.NewStyle().Background(lipgloss.Color("#111111"))
-	CommitOdd     = lipgloss.NewStyle().Background(lipgloss.Color("#1e1e1e"))
-	CommitCurrent = lipgloss.NewStyle().Background(lipgloss.Color("#4a148c"))
+	CommitEven     = lipgloss.NewStyle().Background(lipgloss.Color("#111111"))
+	CommitOdd      = lipgloss.NewStyle().Background(lipgloss.Color("#1e1e1e"))
+	CommitCurrent  = lipgloss.NewStyle().Background(lipgloss.Color("#4a148c"))
+	CommitSelected = lipgloss.NewStyle().Background(lipgloss.Color("#b388ff"))
 
 	MainPanel = lipgloss.NewStyle().
 			Background(lipgloss.Color("#000")).

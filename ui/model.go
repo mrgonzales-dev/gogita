@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-type branchMsg string
 type errMsg string
 type commitMsg []string
 
@@ -23,21 +22,12 @@ func getRecentCommits() tea.Cmd {
 	}
 }
 
-func getBranchName() tea.Cmd {
-	return func() tea.Msg {
-		out, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
-		if err != nil {
-			return errMsg(fmt.Sprintf("Error getting branch name: %s", err))
-		}
-		return branchMsg(strings.TrimSpace(string(out)))
-	}
-}
-
 type Model struct {
-	width      int
-	height     int
-	branchName string
-	commits    []string
+	width   int
+	height  int
+	commits []string
+	cursor  int
+	message string
 }
 
 func NewModel() Model {
@@ -46,7 +36,6 @@ func NewModel() Model {
 
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
-		getBranchName(),
 		getRecentCommits(),
 	)
 }
@@ -56,14 +45,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-	case branchMsg:
-		m.branchName = string(msg)
-	case errMsg:
-		m.branchName = fmt.Sprintf("Error: %s", string(msg))
 	case commitMsg:
 		m.commits = []string(msg)
-	case tea.KeyMsg:
+	case tea.KeyMsg: //keys
 		switch {
+		// refresh using f5, re-renders the tui
+		case keys.IsRefresh(msg):
+			m.message = ""
+			return m, getRecentCommits()
+		case keys.IsEnter(msg):
+			m.message = "hello"
+		case keys.IsUp(msg):
+			if m.cursor > 0 {
+				m.cursor--
+			}
+		case keys.IsDown(msg):
+			if m.cursor < len(m.commits)-1 {
+				m.cursor++
+			}
 		case keys.IsQuit(msg):
 			return m, tea.Quit
 		default:
@@ -84,15 +83,25 @@ func (m Model) View() string {
 
 	// Commit list with alternating rows, highlight current commit
 	var commitLines []string
+
 	for i, commit := range m.commits {
-		if strings.Contains(commit, "HEAD ->") {
+		switch {
+		case i == m.cursor:
+			commitLines = append(commitLines, styles.CommitSelected.Width(innerWidth).Render(commit))
+		case strings.Contains(commit, "HEAD ->"):
 			commitLines = append(commitLines, styles.CommitCurrent.Width(innerWidth).Render(commit))
-		} else if i%2 == 0 {
+		case i%2 == 0:
 			commitLines = append(commitLines, styles.CommitEven.Width(innerWidth).Render(commit))
-		} else {
+		default:
 			commitLines = append(commitLines, styles.CommitOdd.Width(innerWidth).Render(commit))
 		}
 	}
+
+	//render message in the middle as modal
+	if m.message != "" {
+		return styles.MainPanel.Width(m.width).Height(m.height).Render(m.message)
+	}
+
 	content := strings.Join(commitLines, "\n")
 
 	// Full-screen black background with padded commits
