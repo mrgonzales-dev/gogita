@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"gogita/ui/keys"
 	"gogita/ui/styles"
 	"os/exec"
@@ -20,6 +21,10 @@ func getRecentCommits() tea.Cmd {
 		}
 		return commitMsg(strings.Split(strings.TrimSuffix(string(out), "\n"), "\n"))
 	}
+}
+
+func Enter(msg tea.KeyMsg) bool {
+	return msg.Type == tea.KeyEnter
 }
 
 type Model struct {
@@ -104,6 +109,10 @@ func (m Model) View() string {
 
 	content := strings.Join(commitLines, "\n")
 
+	hints := "Press [q] to quit, [f5] to refresh, [j] [k] to navigate"
+	panel := styles.MainPanel.Width(m.width).Height(m.height - 1).Render(content)
+	bar := styles.ActionBar.Width(m.width).Render(hints)
+
 	// Full-screen black background with padded commits
-	return styles.MainPanel.Width(m.width).Height(m.height).Render(content)
+	return lipgloss.JoinVertical(lipgloss.Top, panel, bar)
 }

@@ -8,6 +8,13 @@ var (
 	CommitCurrent  = lipgloss.NewStyle().Background(lipgloss.Color("#4a148c"))
 	CommitSelected = lipgloss.NewStyle().Background(lipgloss.Color("#b388ff"))
 
+	ActionBar = lipgloss.NewStyle().
+			Background(lipgloss.Color("#4a148c")).
+			Foreground(lipgloss.Color("#ffffff")).
+			Height(3).
+			PaddingLeft(2).
+			AlignVertical(lipgloss.Center)
+
 	MainPanel = lipgloss.NewStyle().
 			Background(lipgloss.Color("#000")).
 			PaddingTop(1).
