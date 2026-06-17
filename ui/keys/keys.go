@@ -11,7 +11,7 @@ func IsUp(msg tea.KeyMsg) bool {
 }
 
 func IsDown(msg tea.KeyMsg) bool {
-	return msg.Type == tea.KeyUp || msg.Type == tea.KeyRunes && string(msg.Runes) == "j"
+	return msg.Type == tea.KeyDown || msg.Type == tea.KeyRunes && string(msg.Runes) == "j"
 }
 
 func IsEnter(msg tea.KeyMsg) bool {
@@ -21,8 +21,4 @@ func IsEnter(msg tea.KeyMsg) bool {
 // refresh using f5, re-renders the tui
 func IsRefresh(msg tea.KeyMsg) bool {
 	return msg.Type == tea.KeyF5
-}
-
-func Enter(msg tea.KeyMsg) bool {
-	return msg.Type == tea.KeyEnter
 }

@@ -12,6 +12,7 @@ import (
 
 type errMsg string
 type commitMsg []string
+type checkoutMsg []string
 
 func getRecentCommits() tea.Cmd {
 	return func() tea.Msg {
@@ -23,9 +24,51 @@ func getRecentCommits() tea.Cmd {
 	}
 }
 
-func Enter(msg tea.KeyMsg) bool {
-	return msg.Type == tea.KeyEnter
+func checkoutCommand(target string) tea.Cmd {
+		return func() tea.Msg {
+			out, err := exec.Command("git", "checkout", target).CombinedOutput()
+			if err != nil {
+			return errMsg(fmt.Sprintf("Error checking out %s: %s", target, err))
+		}
+			return checkoutMsg(strings.Split(strings.TrimSuffix(string(out), "\n"), "\n"))
+		}
 }
+
+func enterCommit(m Model) tea.Cmd {
+		if len(m.commits) == 0{
+			return nil
+		}
+		commit := m.commits[m.cursor]
+		hash := strings.Fields(commit)[0]
+		m.message = hash
+
+		var refs []string 
+		start  :=  strings.Index(commit, "(") //starts with (
+		end :=  strings.Index(commit, ")")	//ends with )
+		
+	if start != -1 && end != -1 && end > start {
+		raw := commit[start+1:end]
+		for _, r := range strings.Split(raw, ", ") {
+			r = strings.TrimPrefix(r, "HEAD -> ")
+			if !strings.Contains(r, "/") {
+				refs = append(refs, r)
+			}
+		}
+	}
+	
+	switch len(refs) {
+		case 0:
+			return checkoutCommand(hash)
+		case 1:
+			return checkoutCommand(refs[0])
+		default:
+			m.checkoutRefs = refs
+			m.checkoutCursor = 0
+			m.picking = true
+			return nil
+	}
+}
+
 
 type Model struct {
 	width   int
@@ -33,6 +76,9 @@ type Model struct {
 	commits []string
 	cursor  int
 	message string
+	checkoutRefs []string
+	checkoutCursor int
+	picking bool
 }
 
 func NewModel() Model {
@@ -52,14 +98,44 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 	case commitMsg:
 		m.commits = []string(msg)
+	case checkoutMsg:
+		m.picking = false
+		m.checkoutRefs = nil
+		m.cursor = 0
+		m.message = ""
+		return m, getRecentCommits()
 	case tea.KeyMsg: //keys
 		switch {
+		
+		//for picking branches when there are two
+		case m.picking:
+        switch {
+					case keys.IsUp(msg):
+							if m.checkoutCursor > 0 {
+									m.checkoutCursor--
+							}
+					case keys.IsDown(msg):
+							if m.checkoutCursor < len(m.checkoutRefs)-1 {
+									m.checkoutCursor++
+							}
+					case keys.IsEnter(msg):
+							ref := m.checkoutRefs[m.checkoutCursor]
+							m.picking = false
+							return m, checkoutCommand(ref)
+					case keys.IsQuit(msg):
+							m.picking = false
+							m.checkoutRefs = nil
+					default:
+							var cmd tea.Cmd
+							return m, cmd
+					}
+
 		// refresh using f5, re-renders the tui
 		case keys.IsRefresh(msg):
 			m.message = ""
 			return m, getRecentCommits()
 		case keys.IsEnter(msg):
-			m.message = "hello"
+			return m, enterCommit(m)
 		case keys.IsUp(msg):
 			if m.cursor > 0 {
 				m.cursor--
@@ -102,6 +178,23 @@ func (m Model) View() string {
 		}
 	}
 
+	//branch picking modal
+
+	if m.picking {
+		var items []string
+		for i, ref := range m.checkoutRefs {
+					if i == m.checkoutCursor {
+							items = append(items, "> "+ref)
+					} else {
+								items = append(items, "  "+ref)
+				}
+			}
+			pickerContent := fmt.Sprintf("Pick a branch to checkout:\n\n%s\n", strings.Join(items, "\n"))
+			return styles.MainPanel.Width(m.width).Height(m.height).Render(pickerContent)
+	}
+
+
+
 	//render message in the middle as modal
 	if m.message != "" {
 		return styles.MainPanel.Width(m.width).Height(m.height).Render(m.message)
@@ -110,7 +203,7 @@ func (m Model) View() string {
 	content := strings.Join(commitLines, "\n")
 
 	hints := "Press [q] to quit, [f5] to refresh, [j] [k] to navigate"
-	panel := styles.MainPanel.Width(m.width).Height(m.height - 1).Render(content)
+	panel := styles.MainPanel.Width(m.width).Height(m.height - 2).Render(content)
 	bar := styles.ActionBar.Width(m.width).Render(hints)
 
 	// Full-screen black background with padded commits
